@@ -1,0 +1,53 @@
+SOLARSYSTEM :InitialConditionFile
+#System : ThreeRocks:10:-10
+
+#NewObject
+name: Sun
+fixed:
+mass: 1.989:30
+coordinate_x: 0:0
+coordinate_y: 0:0
+coordinate_z: 0:0
+velocity_x:0:0
+velocity_y:0:0
+velocity_z:0:0
+radius:1:0
+color:0:0:1
+#
+#NewObject
+name: Earth
+mass: 5.974:24
+radius:0.3:0
+coordinate_x:149.60:9
+coordinate_y: 0:0
+coordinate_z: 0:0
+velocity_x: 0:0 
+velocity_y: 29780:0
+velocity_z:0:0
+color:1:0:0
+#
+#NewObject
+name: Venus
+mass:4.867:24
+radius:0.3:0
+coordinate_x:100.33:9
+coordinate_y:40:9
+coordinate_z:6.4:9
+velocity_x: -12200:0
+velocity_y: 30650:0
+velocity_z:0:0
+color:0.4:0:1
+#
+#NewObject
+name:Mercury
+mass: 3.285:23
+radius: 0.2:0
+coordinate_x:-57.48:9
+coordinate_y:0:0
+coordinate_z:7.06:9
+velocity_x: 0:0
+velocity_y: -44000:0
+velocity_z: 0:0
+color:0.8:0:0.2
+#
+

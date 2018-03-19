@@ -1,0 +1,183 @@
+import numpy
+import MyConst
+from PyQt5 import _QOpenGLFunctions_4_1_Core
+from PyQt5.QtCore import pyqtSignal, QPoint, QSize, Qt
+from PyQt5.QtGui import QColor, QSurfaceFormat, QOpenGLVersionProfile, QMouseEvent, QWheelEvent
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QOpenGLWidget, QSlider,
+        QWidget)
+
+class GUI(QWidget):
+    """description of class"""
+   
+    def __init__(self, system, scaling):
+        super(GUI,self).__init__()
+        self.glwidget = myGLWidget()
+        self.slider = self.createSlider()
+        mainlayout = QHBoxLayout()
+        mainlayout.addWidget(self.glwidget)
+        mainlayout.addWidget(self.slider)        
+        self.setLayout(mainlayout)
+        self.set_System(system)
+        self.set_Scaling(scaling)
+        
+
+        
+        self.setWindowTitle(system.name)
+        """
+        self.timer = QtCore.QTimer()
+        
+        self.timer.timeout.connect(self.glwidget.paintGL())
+        self.timer.start(10)
+        """
+    def createSlider(self):
+        slider = QSlider(Qt.Vertical)
+        slider.setRange(0,360*16)
+        slider.setSingleStep(16)
+        slider.setPageStep(15*16)
+        slider.setTickInterval(15*16)
+        slider.setTickPosition(QSlider.TicksRight)
+        return slider
+
+  
+    def set_System(self,system):
+        self.system = system
+    def set_Scaling(self,scaling):
+        self.scaling = scaling
+
+    
+class myGLWidget(QOpenGLWidget):
+    xRotationChanged = pyqtSignal(int)
+    yRotationChanged = pyqtSignal(int)
+    zRotationChanged = pyqtSignal(int)
+
+    def __init__(self,parent = None):
+        super(myGLWidget,self).__init__(parent)
+        self.xRot = 0
+        self.yRot = 0
+        self.zRot = 0
+        self.object = 0
+        self.lastpos = QPoint()
+        self.black = QColor.fromCmykF(1.0, 1.0, 1.0, 0.0)
+        self.trolltechGreen = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
+
+    def minimumSizeHint(self):
+        return QSize(50,50)
+
+    def sizeHint(self):
+        return QSize(800,600)
+    
+    def setXRotation(self,angle):
+        angle = self.normalizeAngle(angle)
+        if angle != self.xRot:
+            self.xRot = angle
+            self.xRotationChanged.emit(angle)
+            self.update()
+
+    def setYRotation(self,angle):
+        angle = self.normalizeAngle(angle)
+        if angle != self.yRot:
+            self.yRot = angle
+            self.yRotationChanged.emit(angle)
+            self.update()
+
+    def setZRotation(self,angle):
+        angle = self.normalizeAngle(angle)
+        if angle != self.zRot:
+            self.zRot = angle
+            self.zRotationChanged.emit(angle)
+            self.update()
+
+    def normalizeAngle(self,angle):
+        while angle< 0:
+            angle += 360*16
+        while angle>360*16:
+            angle -= 360*16
+        return angle
+   
+    
+    def initializeGL(self):
+        
+        self.C = self.context()
+        f = QSurfaceFormat()
+        q = QOpenGLVersionProfile(f)
+        self.gl = self.C.versionFunctions(q)
+        self.setClearColor(self.black)
+        self.object = self.Cube()
+        self.gl.glShadeModel(self.gl.GL_FLAT)
+        self.gl.glEnable(self.gl.GL_DEPTH_TEST)
+        self.gl.glEnable(self.gl.GL_CULL_FACE)
+        super().initializeGL()
+        
+    def paintGL(self):
+        self.gl.glClear(self.gl.GL_COLOR_BUFFER_BIT | self.gl.GL_DEPTH_BUFFER_BIT)
+        self.gl.glLoadIdentity()
+        self.gl.glTranslated(0.0,0.0,-10)
+        self.gl.glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
+        self.gl.glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
+        self.gl.glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
+        self.gl.glCallList(self.object)
+        super().paintGL()
+
+    def resizeGL(self,width,height):
+        side = min(width,height)
+        if side < 0:
+            return
+        self.gl.glViewport((width-side)//2,(height-side)//2,side,side)
+        self.gl.glMatrixMode(self.gl.GL_PROJECTION)
+        self.gl.glLoadIdentity()
+        self.gl.glOrtho(-0.5, +0.5, +0.5, -0.5, 4.0, 15.0)
+        self.gl.glMatrixMode(self.gl.GL_MODELVIEW)
+        
+    
+    def mousePressEvent(self, event):
+        self.lastpos = event.pos()
+        
+    
+    def wheelEvent(self, event):
+
+        if event.buttons() & Qt.WheelFocus:
+
+        
+    
+    def mouseMoveEvent(self, event):
+        dx = event.x() - self.lastpos.x()
+        dy = event.y() - self.lastpos.y()
+
+        if event.buttons() & Qt.LeftButton:
+            self.setXRotation(self.xRot+ 8*dy)
+            self.setYRotation(self.yRot +8*dx)
+        elif event.buttons() & Qt.RightButton:
+            self.setXRotation(self.xRot+ 8*dy)
+            self.setZRotation(self.zRot+ 8*dx)
+        self.lastpos = event.pos()    
+
+    def Cube(self):
+ 
+        genList = self.gl.glGenLists(1)
+        self.gl.glNewList(genList,self.gl.GL_COMPILE)
+        self.gl.glBegin(self.gl.GL_QUADS)
+
+
+        
+        for surface in MyConst.surfaces:
+            x = 0
+       
+            for vertex in surface:
+                x +=1
+                self.setColor(QColor.fromCmykF(MyConst.colors[x][0], MyConst.colors[x][1], MyConst.colors[x][2], 0.0))
+                self.gl.glVertex3d(0.1*MyConst.vertices[vertex][0],0.1*MyConst.vertices[vertex][1],0.1*MyConst.vertices[vertex][2])
+                
+        self.gl.glEnd()
+        self.gl.glBegin(self.gl.GL_LINES)
+        for edge in MyConst.edges:
+            for vertex in edge:
+                self.gl.glVertex3d(0.1*MyConst.vertices[vertex][0],0.1*MyConst.vertices[vertex][1],0.1*MyConst.vertices[vertex][2])
+        self.gl.glEnd()
+        self.gl.glEndList()
+        return genList
+
+    def setClearColor(self, c):
+        self.gl.glClearColor(c.redF(), c.greenF(), c.blueF(), c.alphaF())
+
+    def setColor(self,c):
+        self.gl.glColor4f(c.redF(), c.greenF(), c.blueF(), c.alphaF())
